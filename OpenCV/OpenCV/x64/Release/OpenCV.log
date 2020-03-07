@@ -1,31 +1,31 @@
 ﻿  Source.cpp
-C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\OpenCV\Source.cpp(50,31): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\OpenCV\Source.cpp(51,32): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\OpenCV\Source.cpp(137,157): warning C4244: 'argument': conversion from 'const _Tp' to 'int', possible loss of data
+C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\OpenCV\Source.cpp(48,31): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\OpenCV\Source.cpp(49,32): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\OpenCV\Source.cpp(97,109): warning C4244: 'argument': conversion from '_Tp' to 'int', possible loss of data
           with
           [
               _Tp=double
           ]
-C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\OpenCV\Source.cpp(137,129): warning C4244: 'argument': conversion from 'const _Tp' to 'int', possible loss of data
+C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\OpenCV\Source.cpp(97,93): warning C4244: 'argument': conversion from '_Tp' to 'int', possible loss of data
           with
           [
               _Tp=double
           ]
-C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\OpenCV\Source.cpp(137,96): warning C4244: 'argument': conversion from 'const _Tp' to 'int', possible loss of data
+C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\OpenCV\Source.cpp(97,72): warning C4244: 'argument': conversion from '_Tp' to 'int', possible loss of data
           with
           [
               _Tp=double
           ]
-C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\OpenCV\Source.cpp(137,64): warning C4244: 'argument': conversion from 'const _Tp' to 'int', possible loss of data
+C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\OpenCV\Source.cpp(97,52): warning C4244: 'argument': conversion from '_Tp' to 'int', possible loss of data
           with
           [
               _Tp=double
           ]
      Creating library C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\x64\Release\OpenCV.lib and object C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\x64\Release\OpenCV.exp
   Generating code
-C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\OpenCV\Source.cpp(148): warning C4715: 'Track': not all control paths return a value
-  1 of 329 functions ( 0.3%) were compiled, the rest were copied from previous compilation.
-    1 functions were new in current compilation
+C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\OpenCV\Source.cpp(50): warning C4715: 'Init': not all control paths return a value
+  12 of 261 functions ( 4.6%) were compiled, the rest were copied from previous compilation.
+    2 functions were new in current compilation
     0 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   OpenCV.vcxproj -> C:\dev\OpenCV-Unity-Object-Tracking\OpenCV\x64\Release\OpenCV.dll

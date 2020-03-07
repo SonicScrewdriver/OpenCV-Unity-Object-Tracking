@@ -15,9 +15,6 @@ using namespace cv;
 // OBJECT TRACKING PROTOTYPE
 // Convert to string
 
-#define SSTR( x ) static_cast< std::ostringstream & >( \
-( std::ostringstream() << std::dec << x ) ).str()
-
 // Declare structure to be used to pass data from C++ to Mono. FACES
 struct Circle
 {
@@ -35,6 +32,7 @@ CascadeClassifier _faceCascade;
 String _windowName = "Unity OpenCV Prototype #2";
 VideoCapture _capture;
 int _scale = 1;
+MultiTracker trackers;
 
 extern "C" int __declspec(dllexport) __stdcall  Init(int& outCameraWidth, int& outCameraHeight)
 {
@@ -49,52 +47,22 @@ extern "C" int __declspec(dllexport) __stdcall  Init(int& outCameraWidth, int& o
 
 	outCameraWidth = _capture.get(CAP_PROP_FRAME_WIDTH);
 	outCameraHeight = _capture.get(CAP_PROP_FRAME_HEIGHT);
-
-
 }
-inline cv::Ptr<cv::Tracker> createTrackerByName(cv::String name)
-{
-    cv::Ptr<cv::Tracker> tracker;
 
-    if (name == "KCF")
-        tracker = cv::TrackerKCF::create();
-    else if (name == "TLD")
-        tracker = cv::TrackerTLD::create();
-    else if (name == "BOOSTING")
-        tracker = cv::TrackerBoosting::create();
-    else if (name == "MEDIAN_FLOW")
-        tracker = cv::TrackerMedianFlow::create();
-    else if (name == "MIL")
-        tracker = cv::TrackerMIL::create();
-    else if (name == "GOTURN")
-        tracker = cv::TrackerGOTURN::create();
-    else if (name == "MOSSE")
-        tracker = cv::TrackerMOSSE::create();
-    else if (name == "CSRT")
-        tracker = cv::TrackerCSRT::create();
-    else
-        CV_Error(cv::Error::StsBadArg, "Invalid tracking algorithm name\n");
-
-    return tracker;
-}
 
 
 // Expose the function for DLL
-extern "C" int __declspec(dllexport) __stdcall  Track(Rectangle * outTracking, int maxOutTrackingCount, int& outDetectedTrackingCount)
+extern "C" void __declspec(dllexport) __stdcall  Track(Rectangle * outTracking, int maxOutTrackingCount, int& outDetectedTrackingCount)
 {
 
     Mat frame;
     _capture >> frame;
-    bool ok = !frame.empty();
     if(frame.empty()) {
-        return 0;
+        return;
     }
 
-    // set the default tracking algorithm
-    std::string trackingAlg = "KCF";
-
     // create the tracker
-    MultiTracker trackers;
+
 
     // container of the tracked objects
     vector<Rect2d> objects;
@@ -105,36 +73,28 @@ extern "C" int __declspec(dllexport) __stdcall  Track(Rectangle * outTracking, i
 
     //quit when the tracked object(s) is not provided
     if (ROIs.size() < 1)
-        return 0;
+        return;
 
     // initialize the tracker
     std::vector<Ptr<Tracker> > algorithms;
     for (size_t i = 0; i < ROIs.size(); i++)
     {
-        algorithms.push_back(createTrackerByName(trackingAlg));
+        algorithms.push_back(cv::TrackerKCF::create());
         objects.push_back(ROIs[i]);
     }
 
     trackers.add(algorithms, frame, objects);
 
-    // do the tracking
-    printf("Start the tracking process, press ESC to quit.\n");
-    for (;; ) {
-        // get frame from the video
-        _capture >> frame;
-
-        // stop the program if no more images
-        if (frame.rows == 0 || frame.cols == 0)
-            break;
-
         //update the tracking result
         trackers.update(frame);
 
         // draw the tracked object
-        for (unsigned i = 0; i < trackers.getObjects().size(); i++) {
-            rectangle(frame, trackers.getObjects()[i], Scalar(255, 0, 0), 2, 1);
 
-            outTracking[i] = Rectangle(trackers.getObjects()[i].width, trackers.getObjects()[i].height, trackers.getObjects()[i].x, trackers.getObjects()[i].y);
+        for (size_t i = 0; i < trackers.getObjects().size(); i++) {
+            Rect2d currentTrack = trackers.getObjects()[i];
+            rectangle(frame, currentTrack, Scalar(255, 0, 0), 2, 1);
+            
+            outTracking[i] = Rectangle(currentTrack.width, currentTrack.height, currentTrack.x, currentTrack.y);
             outDetectedTrackingCount++;
 
             if (outDetectedTrackingCount == maxOutTrackingCount)
@@ -142,8 +102,8 @@ extern "C" int __declspec(dllexport) __stdcall  Track(Rectangle * outTracking, i
 
         }
         // show image with the tracked object
-        imshow(_windowName, frame);
-    }
+        imshow("tracker", frame);
+    
 
 }
 
@@ -192,5 +152,5 @@ extern "C" void __declspec(dllexport) __stdcall Detect(Circle * outFaces, int ma
 	}
 
 	// Display debug output.
-	imshow(_windowName, frame);
+	imshow("tracker", frame);
 }
