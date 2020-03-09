@@ -21,9 +21,7 @@ public class OpenCVFaceDetection : MonoBehaviour
         [DllImport("OpenCV")]
         internal unsafe static extern void Detect(CvCircle* outFaces, int maxOutFacesCount, ref int outDetectedFacesCount);
 
-        [DllImport("OpenCV")]
-        internal unsafe static extern int Track(CvRectangle* outTracking, int maxTrackingCount, ref int outTrackingsCount);
-    }
+       }
 
     [StructLayout(LayoutKind.Sequential, Size = 12)]
     public struct CvCircle
@@ -31,15 +29,7 @@ public class OpenCVFaceDetection : MonoBehaviour
         public int X, Y, Radius;
     }
 
-    public struct CvRectangle
-    {
-        public int Width, Height, X, Y;
-    }
-
-
-    // Start is called before the first frame update
     public static List<Vector2> NormalizedFacePositions { get; private set; }
-    public static List<Vector2> NormalizedTrackingPositions { get; private set; }
     public static Vector2 CameraResolution;
 
     /// <summary>
@@ -49,9 +39,7 @@ public class OpenCVFaceDetection : MonoBehaviour
 
     private bool _ready;
     private int _maxFaceDetectCount = 5;
-    private int _maxTrackingCount = 5;
     private CvCircle[] _faces;
-    private CvRectangle[] _tracking;
 
     void Start()
     {
@@ -61,21 +49,22 @@ public class OpenCVFaceDetection : MonoBehaviour
         {
             if (result == -1)
             {
-                Debug.LogWarningFormat("[{0}] Failed to find cascades definition.", GetType());
+                Debug.LogWarningFormat("[{-1}] Failed to find cascades definition.", GetType());
             }
             else if (result == -2)
             {
-                Debug.LogWarningFormat("[{0}] Failed to open camera stream.", GetType());
+                Debug.LogWarningFormat("[{-2}] Failed to open camera stream.");
             }
 
             return;
+        } else if(result == 1)
+        {
+            Debug.LogWarningFormat("[{1}] It initialized!");
         }
 
         CameraResolution = new Vector2(camWidth, camHeight);
         _faces = new CvCircle[_maxFaceDetectCount];
-        _tracking = new CvRectangle[_maxTrackingCount];
         NormalizedFacePositions = new List<Vector2>();
-        NormalizedTrackingPositions = new List<Vector2>();
         OpenCVInterop.SetScale(DetectionDownScale);
         _ready = true;
     }
@@ -93,7 +82,7 @@ public class OpenCVFaceDetection : MonoBehaviour
         if (!_ready) {
             return;
         }
-        ObjectTracking();
+        FaceDetection();
 
     }
 
@@ -115,22 +104,6 @@ public class OpenCVFaceDetection : MonoBehaviour
         }
     }
 
-    void ObjectTracking()
-    {
-        int detectedTrackingCount = 0;
-        unsafe
-        {
-            fixed (CvRectangle* outTracking = _tracking)
-            {
-                OpenCVInterop.Track(outTracking, _maxTrackingCount, ref detectedTrackingCount);
-            }
-        }
-
-        NormalizedFacePositions.Clear();
-        for (int i = 0; i < detectedTrackingCount; i++)
-        {
-            NormalizedTrackingPositions.Add(new Vector2((_tracking[i].X * DetectionDownScale) / CameraResolution.x, 1f - ((_tracking[i].Y * DetectionDownScale) / CameraResolution.y)));
-        }
-    }
+   
 }
 

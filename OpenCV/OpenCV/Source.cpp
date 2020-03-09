@@ -13,7 +13,10 @@
 using namespace std;
 using namespace cv;
 // OBJECT TRACKING PROTOTYPE
+
 // Convert to string
+#define SSTR( x ) static_cast< std::ostringstream & >( \
+( std::ostringstream() << std::dec << x ) ).str()
 
 // Declare structure to be used to pass data from C++ to Mono. FACES
 struct Circle
@@ -24,15 +27,18 @@ struct Circle
 
 // Object Tracking Rectangles!
 struct Rectangle {
-    Rectangle(int width, int height, int x, int y) : Width(width), Height(height), X(x), Y(y) {}
-    int Width, Height, X, Y;
+	Rectangle(int width, int height, int x, int y) : Width(width), Height(height), X(x), Y(y) {}
+	int Width, Height, X, Y;
 };
 
 CascadeClassifier _faceCascade;
 String _windowName = "Unity OpenCV Prototype #2";
 VideoCapture _capture;
 int _scale = 1;
-MultiTracker trackers;
+Ptr<Tracker> tracker;
+Rect2d bbox;
+string trackerType;
+
 
 extern "C" int __declspec(dllexport) __stdcall  Init(int& outCameraWidth, int& outCameraHeight)
 {
@@ -47,6 +53,51 @@ extern "C" int __declspec(dllexport) __stdcall  Init(int& outCameraWidth, int& o
 
 	outCameraWidth = _capture.get(CAP_PROP_FRAME_WIDTH);
 	outCameraHeight = _capture.get(CAP_PROP_FRAME_HEIGHT);
+
+	Mat frame;
+
+	_capture >> frame;
+	bool ok = _capture.read(frame);
+	if (frame.empty()) {
+		return -3;
+	}
+
+	// List of tracker types in OpenCV 3.4.1
+	string trackerTypes[8] = { "BOOSTING", "MIL", "KCF", "TLD","MEDIANFLOW", "GOTURN", "MOSSE", "CSRT" };
+	// vector <string> trackerTypes(types, std::end(types));
+
+	// Create a tracker
+	trackerType = trackerTypes[2];
+
+
+	if (trackerType == "BOOSTING")
+		tracker = TrackerBoosting::create();
+	if (trackerType == "MIL")
+		tracker = TrackerMIL::create();
+	if (trackerType == "KCF")
+		tracker = TrackerKCF::create();
+	if (trackerType == "TLD")
+		tracker = TrackerTLD::create();
+	if (trackerType == "MEDIANFLOW")
+		tracker = TrackerMedianFlow::create();
+	if (trackerType == "GOTURN")
+		tracker = TrackerGOTURN::create();
+	if (trackerType == "MOSSE")
+		tracker = TrackerMOSSE::create();
+	if (trackerType == "CSRT")
+		tracker = TrackerCSRT::create();
+
+
+	// Define initial bounding box 
+	Rect2d bbox(180, 70, 200, 200);
+	rectangle(frame, bbox, Scalar(255, 0, 0), 2, 1);
+
+	imshow("Tracking", frame);
+	bool trackerInit = tracker->init(frame, bbox);
+
+	if (trackerInit) {
+		return 1;
+	}
 }
 
 
@@ -54,56 +105,33 @@ extern "C" int __declspec(dllexport) __stdcall  Init(int& outCameraWidth, int& o
 // Expose the function for DLL
 extern "C" void __declspec(dllexport) __stdcall  Track(Rectangle * outTracking, int maxOutTrackingCount, int& outDetectedTrackingCount)
 {
+	Mat frame;
+	_capture >> frame;
+	if (frame.empty()) {
+		return;
+	}
 
-    Mat frame;
-    _capture >> frame;
-    if(frame.empty()) {
-        return;
-    }
-
-    // create the tracker
-
-
-    // container of the tracked objects
-    vector<Rect2d> objects;
+	// Update the tracking result
+	bool ok = tracker->update(frame, bbox);
 
 
-    vector<Rect> ROIs;
-    selectROIs("tracker", frame, ROIs);
+	if (ok)
+	{
+		// Tracking success : Draw the tracked object
+		rectangle(frame, bbox, Scalar(255, 0, 0), 2, 1);
+		outTracking[0] = Rectangle(bbox.width, bbox.height, bbox.x, bbox.y);
+	}
+	else
+	{
+		// Tracking failure detected.
+		putText(frame, "Tracking failure detected", Point(100, 80), FONT_HERSHEY_SIMPLEX, 0.75, Scalar(0, 0, 255), 2);
+	}
 
-    //quit when the tracked object(s) is not provided
-    if (ROIs.size() < 1)
-        return;
+	// Display tracker type on frame
+	putText(frame, trackerType + " Tracker", Point(100, 20), FONT_HERSHEY_SIMPLEX, 0.75, Scalar(50, 170, 50), 2);
 
-    // initialize the tracker
-    std::vector<Ptr<Tracker> > algorithms;
-    for (size_t i = 0; i < ROIs.size(); i++)
-    {
-        algorithms.push_back(cv::TrackerKCF::create());
-        objects.push_back(ROIs[i]);
-    }
-
-    trackers.add(algorithms, frame, objects);
-
-        //update the tracking result
-        trackers.update(frame);
-
-        // draw the tracked object
-
-        for (size_t i = 0; i < trackers.getObjects().size(); i++) {
-            Rect2d currentTrack = trackers.getObjects()[i];
-            rectangle(frame, currentTrack, Scalar(255, 0, 0), 2, 1);
-            
-            outTracking[i] = Rectangle(currentTrack.width, currentTrack.height, currentTrack.x, currentTrack.y);
-            outDetectedTrackingCount++;
-
-            if (outDetectedTrackingCount == maxOutTrackingCount)
-                break;
-
-        }
-        // show image with the tracked object
-        imshow("tracker", frame);
-    
+	// Display frame.
+	imshow("Tracking", frame);
 
 }
 
